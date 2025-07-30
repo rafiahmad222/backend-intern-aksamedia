@@ -49,6 +49,39 @@ class AuthController extends Controller
             ],
         ]);
     }
+
+    // Web authentication method
+    public function webLogin(Request $request)
+    {
+        $request->validate([
+            'username' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        $admin = Admin::where('username', $request->username)->first();
+
+        if (!$admin || !Hash::check($request->password, $admin->password)) {
+            return back()->withErrors([
+                'username' => 'Username atau password salah.',
+            ])->withInput($request->only('username'));
+        }
+
+        // Create session for web
+        session([
+            'admin_id' => $admin->id,
+            'admin_name' => $admin->name,
+            'admin_username' => $admin->username,
+        ]);
+
+        return redirect()->route('dashboard');
+    }
+
+    public function webLogout(Request $request)
+    {
+        $request->session()->flush();
+        return redirect()->route('login');
+    }
+
     public function logout(Request $request)
     {
         // Menghapus token yang sedang digunakan
